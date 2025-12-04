@@ -1,5 +1,44 @@
 <h2 align="center">Mørkepub</h2>
 
+## Changes from original repo
+原始repo中会在线下载NLLB200/small100模型。没有外网权限时无法下载。
+
+**这个fork给出了如何使用下载好的本地模型NLLB200并进行加载的指示。** small100也是类似的。需要根据以下操作进行代码修改和模型下载。
+
+官方代码仓库已归档，fork后下载源代码
+
+然后执行`pip install -r requirements.txt`
+
+之后需要手动下载两个模型：
+1. NLLB200
+   - translation.py line12-20定义了可用的model并加载
+   - persistence.py line11定义了cfg, 默认模型是none，需要在ui.py中选setting然后下载。
+       由于需要手动下载模型，需要在line11中将none改为NLLB200（每次更改均需要删除保存的cfg文件settings.json，不然只会读取原始文件）
+       然后去model_download.py line13-20找到模型在hf上的名称。注意NLLB200并不是官方README中给出的hf链接，而是作者量化后的int8模型
+       （官方给的链接模型是纯HF模型，但是model类加载的时候既使用了HF也使用了CTranslate模型的model.bin格式）
+   - 下载后将模型路径写入model_NLLB200.py中的全局变量model_path(默认路径是Roaming底下)，然后在transformers.AutoTokenizer.from_pretrained
+       加入local_files_only=True参数。注意加载的路径/repo id符合某种正则表达式且不能大于96个字符，所以最好放在短路径全英文路径下。
+2. punkt_tab
+   - 此模型被nltk需要。官方给的例子是nltk.download('punkt_tab')。使用print(nltk.data.path)查看默认保存路径，随便找个路径，例如
+        D:\\ProgramData\\miniforge3\\envs\\debug\\nltk_data，然后下载
+        https://github.com/nltk/nltk_data/raw/gh-pages/packages/tokenizers/punkt_tab.zip到该路径下。
+        文件夹结构如下：
+
+        
+        C:\Users\你的用户名\AppData\Roaming\nltk_data\
+        └── tokenizers\
+            └── punkt_tab\
+                ├── english/
+                ├── chinese/
+                ├── french/
+                └── ...（其他语言文件夹）
+        
+之后便可直接运行ui.py 根据指示进行epub转换。
+
+> Moerkepub使用的是CTranslate模型，官方只支持部分模型，暂时无法使用Qwen等大模型。
+
+## 原始README
+
 This is a command-line tool to translate EPUBs using multilingual transformer models.
 Processing runs locally and requires a GPU.
 
